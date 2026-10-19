@@ -1,94 +1,90 @@
-# PawPal+ (Module 2 Project)
+# PawPal+
 
-You are building **PawPal+**, a Streamlit app that helps a pet owner plan care tasks for their pet.
+PawPal+ is a pet care planner built with Python, dataclasses, and Streamlit. It keeps care tasks for multiple pets, prioritizes the work that fits an owner's available time, and explains what the plan includes.
 
-## Scenario
+## Features
 
-A busy pet owner needs help staying consistent with pet care. They want an assistant that can:
+- Add pets with a name, species, and optional breed.
+- Schedule care tasks with a due date, preferred time, duration, priority, and one-time/daily/weekly frequency.
+- Generate a daily plan across pets within a chosen time budget. High-priority tasks are considered first; selected items are shown with the reason they fit.
+- See warnings for tasks whose time intervals overlap, including overlaps between pets.
+- Complete daily and weekly tasks to automatically add their next occurrence.
+- Filter tasks in the backend by pet, completion status, and due date.
+- View and complete household tasks in the Streamlit UI.
 
-- Track pet care tasks (walks, feeding, meds, enrichment, grooming, etc.)
-- Consider constraints (time available, priority, owner preferences)
-- Produce a daily plan and explain why it chose that plan
-
-Your job is to design the system first (UML), then implement the logic in Python, then connect it to the Streamlit UI.
-
-## What you will build
-
-Your final app should:
-
-- Let a user enter basic owner + pet info
-- Let a user add/edit tasks (duration + priority at minimum)
-- Generate a daily schedule/plan based on constraints and priorities
-- Display the plan clearly (and ideally explain the reasoning)
-- Include tests for the most important scheduling behaviors
-
-## Getting started
-
-### Setup
+## Run PawPal+
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
+source .venv/bin/activate  # Windows: .venv\\Scripts\\Activate.ps1
+python -m pip install --upgrade pip
 pip install -r requirements.txt
+streamlit run app.py
 ```
 
-### Suggested workflow
+The app starts with a sample household. Add pets in the sidebar, add their tasks, choose a date and time budget, and select **Generate schedule**. The task list lets you mark recurring care complete; the next occurrence is then added to that pet.
 
-1. Read the scenario carefully and identify requirements and edge cases.
-2. Draft a UML diagram (classes, attributes, methods, relationships).
-3. Convert UML into Python class stubs (no logic yet).
-4. Implement scheduling logic in small increments.
-5. Add tests to verify key behaviors.
-6. Connect your logic to the Streamlit UI in `app.py`.
-7. Refine UML so it matches what you actually built.
+## Implementation summary
 
-## 🖥️ Sample Output
+`Task` stores the activity, its due date/time, duration, priority, recurrence, and completion state. `Pet` owns its task list. `Owner` manages multiple pets and supplies all pet-task pairs through `get_all_tasks()`. `Scheduler` reads tasks through that owner method, then sorts and filters them, constructs a time-budgeted plan, checks overlaps, and advances recurrence when a task is completed. `ScheduledItem` packages each selected task with its planned time and a short reason. `app.py` stores the owner in Streamlit session state so UI actions preserve household data during the session.
 
-Paste a sample of your app's CLI or Streamlit output here so a reader can see what a generated plan looks like:
+## Smarter Scheduling
 
+| Feature | Method | Behavior |
+|---|---|---|
+| Sorting | `Scheduler.sort_by_time()` | Orders task objects by validated 24-hour `HH:MM` time. |
+| Filtering | `Scheduler.filter_tasks()` | Filters household tasks by pet name, completion state, and due date. |
+| Time budget and priority | `Scheduler.build_daily_plan()` | Considers high priority first, fits tasks into the available minute budget, and reports tasks that do not fit. |
+| Conflict detection | `Scheduler.detect_conflicts()` | Warns when task intervals overlap on the same date, including between different pets. |
+| Recurring tasks | `Task.next_occurrence()` and `Scheduler.mark_task_complete()` | Completing a daily/weekly task adds the next date's task; one-time tasks do not repeat. |
+
+The planner treats duration as continuous scheduled time from the selected start. The task's preferred time is used for tie-breaking within a priority, while the generated plan packs selected tasks sequentially so it can enforce a single time budget.
+
+## Demo Walkthrough
+
+1. Enter an owner name and add each pet from the sidebar.
+2. Schedule care tasks, choosing each pet, a date, preferred time, duration, priority, and recurrence.
+3. Choose a plan date, available minutes, and start time, then generate the plan. Tasks are listed across pets with a reason for inclusion.
+4. If two tasks occupy overlapping intervals, read the warning under the plan. Tasks that exceed the remaining budget are listed as skipped.
+5. In **All tasks**, mark a daily or weekly task complete. The app records the completed instance and adds the next occurrence.
+
+## CLI sample
+
+Run `python main.py` to see the backend operate across two pets:
+
+```text
+Today's Schedule for Jordan — 2026-10-19
+  08:00 — Mochi: Breakfast (10 min, high priority)
+  08:10 — Biscuit: Morning walk (30 min, high priority)
+  08:40 — Biscuit: Grooming (20 min, low priority)
+Conflict warnings: none
 ```
-# e.g.:
-# Daily plan for Biscuit (Golden Retriever):
-#   08:00 — Morning walk (30 min) [priority: high]
-#   09:00 — Feeding (10 min) [priority: high]
-#   ...
-```
 
-## 🧪 Testing PawPal+
+The displayed date follows the computer's current date; the times and task details are fixed sample data.
+
+## Testing PawPal+
+
+Run the automated suite with:
 
 ```bash
-# Run the full test suite:
-pytest
-
-# Run with coverage:
-pytest --cov
+python -m pytest
 ```
 
-Sample test output:
+Tests cover task completion and addition, multi-pet retrieval, chronological sorting, filtering, daily and weekly recurrence, duration overlap detection, time-budget/priority behavior, and invalid time input. Local verification output:
 
+```text
+..........                                                               [100%]
+10 passed in 0.02s
 ```
-# Paste your pytest output here
-```
 
-## 📐 Smarter Scheduling
+## Architecture
 
-> Fill in once you've implemented scheduling logic.
+The final class diagram is in [`diagrams/uml_final.mmd`](diagrams/uml_final.mmd). A compact initial draft is retained as [`diagrams/uml_draft.mmd`](diagrams/uml_draft.mmd).
 
-| Feature | Method(s) | Notes |
-|---------|-----------|-------|
-| Task sorting | | e.g., by priority, duration |
-| Filtering | | e.g., skip tasks if time runs out |
-| Conflict handling | | e.g., overlapping time slots |
-| Recurring tasks | | e.g., daily vs. weekly |
+## Project files
 
-## 📸 Demo Walkthrough
-
-Describe your app in numbered steps so a reader can follow along without watching a video:
-
-1. <!-- Describe this step -->
-2. <!-- Describe this step -->
-3. <!-- Describe this step -->
-4. <!-- Describe this step -->
-5. <!-- Add more steps as needed -->
-
-**Screenshot or video** *(optional)*: <!-- Insert a screenshot or link to a demo video here -->
+- `pawpal_system.py` — domain classes and scheduling algorithms
+- `app.py` — Streamlit interface
+- `main.py` — CLI demonstration
+- `tests/test_pawpal.py` — automated tests
+- `reflection.md` — design and AI collaboration reflection draft

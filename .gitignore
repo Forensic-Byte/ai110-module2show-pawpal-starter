@@ -1,5 +1,5 @@
-__pycache__/
 .venv/
-.venv_new/
+__pycache__/
 .pytest_cache/
+.streamlit/secrets.toml
 .DS_Store
